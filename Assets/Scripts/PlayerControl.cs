@@ -137,7 +137,10 @@ public class PlayerControl : MonoBehaviour {
 		cc.Move(movement * Time.deltaTime);
 		grounded = cc.isGrounded;
 		
-		// Hack to fix stupid grounded flag jitter.
+		// Hack to fix grounded flag jitter.
+		// (CharacterController only does some collision stuff for you, it
+		//  doesn't know what Y velocity variables you use, so you gotta
+		//  give it hints sometimes. It's all good.)
 		grounded |= prevGrounded && Mathf.Approximately(upward, 0f);
 	}
 }
