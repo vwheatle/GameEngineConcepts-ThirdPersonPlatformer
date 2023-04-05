@@ -16,7 +16,8 @@ public class PlayerControl : MonoBehaviour {
 	
 	[Header("Juice")]
 	
-	public Transform juiceVisuals;
+	public Transform juiceScalePivot;
+	public Transform juiceRotationPivot;
 	
 	// Lean back while moving forward.
 	private Vector3 leanEulerRotation;
@@ -30,6 +31,8 @@ public class PlayerControl : MonoBehaviour {
 	private float stretchAmount, stretchVelocity;
 	public float stretchRecoverSpeed = 1/4f;
 	
+	private bool prevGrounded, grounded;
+	
 	void Start() {
 		cc = GetComponent<CharacterController>();
 		
@@ -38,26 +41,31 @@ public class PlayerControl : MonoBehaviour {
 	}
 
 	void Update() {
+		bool justLanded     = (!prevGrounded) && ( grounded);
+		bool justLeftGround = ( prevGrounded) && (!grounded);
+		
 		Vector2 wasd = new Vector2(
 			Input.GetAxisRaw("Horizontal"),
 			Input.GetAxisRaw("Vertical")
 		).normalized;
 		
-		bool grounded = cc.isGrounded;
-		
 		bool moving = !Mathf.Approximately(wasd.sqrMagnitude, 0f);
 		
-		bool shouldJump = false;
+		stretchAmount = Mathf.SmoothDamp(
+			stretchAmount, 0f,
+			ref stretchVelocity,
+			stretchRecoverSpeed
+		);
 		
-		stretchAmount = Mathf.SmoothDamp(stretchAmount, 0f, ref stretchVelocity, stretchRecoverSpeed);
+		bool tryJump = false;
 		
 		if (grounded) {
 			upward = 0f;
 			
-			if (remainingJumps != maximumJumps) {
-				Debug.Log("recover!!");
+			if (justLanded) {
+				Debug.Log("recover!");
 				
-				// we just landed, so recover jumps
+				// recover jumps we lost in air
 				remainingJumps = maximumJumps;
 				
 				// and recoil a bit from the landing
@@ -65,24 +73,37 @@ public class PlayerControl : MonoBehaviour {
 				stretchAmount = -0.5f;
 			}
 			
-			if (Input.GetButton("Jump"))
-				shouldJump = true;
+			if (Input.GetButton("Jump")) tryJump = true;
 		} else {
-			if (Input.GetButtonDown("Jump"))
-				shouldJump = true;
-		}
-		
-		if (shouldJump) {
-			Debug.Log("jump!!");
+			if (justLeftGround) {
+				Debug.Log("peace!");
+				
+				// lose an implicit jump
+				// (this is how  double jump works in most games)
+				// remainingJumps--;
+			}
 			
-			// Try to jump!
+			if (Input.GetButtonDown("Jump")) tryJump = true;
+			
+			if (!tryJump) {
+				// Otherwise, be affected by gravity.
+				upward = Mathf.Max(-8f, upward - Mathf.Abs(Time.deltaTime * 12f));
+			}
+		}
+	
+		if (tryJump) {
 			if (remainingJumps > 0) {
+				// Lose a jump
 				remainingJumps--;
 				
+				// Stretch out
 				stretchAmount = 1f;
 				stretchVelocity = 0f;
 				
+				// Initial jump velocity
 				upward = jumpHeight;
+				
+				// You're no longer on the ground
 				grounded = false;
 			} else {
 				// You tried to jump, but it's just
@@ -90,9 +111,6 @@ public class PlayerControl : MonoBehaviour {
 				// Try again when you land!
 				stretchAmount = 0.25f;
 			}
-		} else {
-			// Otherwise, be affected by gravity.
-			upward = Mathf.Max(-8f, upward - Mathf.Abs(Time.deltaTime * 12f));
 		}
 		
 		leanEulerRotation = Vector3.ClampMagnitude(
@@ -105,8 +123,8 @@ public class PlayerControl : MonoBehaviour {
 			leanMagnitude
 		);
 		
-		juiceVisuals.localScale = Vector3.LerpUnclamped(Vector3.one, stretchVector, stretchAmount);
-		juiceVisuals.localEulerAngles = leanEulerRotation;
+		juiceScalePivot.localScale = Vector3.LerpUnclamped(Vector3.one, stretchVector, stretchAmount);
+		juiceRotationPivot.localEulerAngles = leanEulerRotation;
 		
 		Vector3 movement = new Vector3(
 			wasd.x * movementSpeed,
@@ -114,6 +132,12 @@ public class PlayerControl : MonoBehaviour {
 			wasd.y * movementSpeed
 		);
 		movement = transform.localRotation * movement;
+		
+		prevGrounded = grounded;
 		cc.Move(movement * Time.deltaTime);
+		grounded = cc.isGrounded;
+		
+		// Hack to fix stupid grounded flag jitter.
+		grounded |= prevGrounded && Mathf.Approximately(upward, 0f);
 	}
 }
