@@ -8,7 +8,9 @@ public class PlayerControl : MonoBehaviour {
 	[Header("Movement")]
 	
 	public float movementSpeed = 8f;
+	[Tooltip("The ")]
 	public float jumpHeight = 10f;
+	[Tooltip("The maximum allowed jumps, possibly in mid-air, before the player must land safely to jump again.")]
 	public int maximumJumps = 2;
 	private int remainingJumps = 0;
 	
@@ -16,20 +18,34 @@ public class PlayerControl : MonoBehaviour {
 	
 	[Header("Juice")]
 	
+	[Tooltip("The transform to scale during stretch/squish animations. Should be a child of this.")]
 	public Transform juiceScalePivot;
+	
+	[Tooltip("The transform to rotate during leaning animations. Should be a child of the scale pivot.")]
 	public Transform juiceRotationPivot;
 	
-	// Lean back while moving forward.
+	// Lean into/out of movement.
 	private Vector3 leanEulerRotation;
 	private Vector3 leanEulerRotationVelocity;
-	public float leanMagnitude = 30f;
+	
+	[Tooltip("Positive to lean forward, Negative to lean back.")]
+	public float leanMagnitude = -20f;
+	
+	[Tooltip("Number of seconds needed to lean completely in a direction.")]
 	public float leanSpeed = 1/8f;
+	
+	[Tooltip("Number of seconds needed to return from leaning to standing straight.")]
 	public float leanRecoverSpeed = 1/2f;
 	
 	// Squish while jumping and landing.
 	private Vector3 stretchVector = new Vector3(7/8f, 5/4f, 7/8f);
-	private float stretchAmount, stretchVelocity;
+	private float stretchAmount; // <- could replace with Vector3s, but it's more efficient this way...
+	private float stretchVelocity;
+	
+	[Tooltip("Number of seconds needed to return from deformations to normal size.")]
 	public float stretchRecoverSpeed = 1/4f;
+	
+	// Internal flags and state and stuff
 	
 	private bool prevGrounded, grounded;
 	
@@ -43,6 +59,25 @@ public class PlayerControl : MonoBehaviour {
 	void Update() {
 		bool justLanded     = (!prevGrounded) && ( grounded);
 		bool justLeftGround = ( prevGrounded) && (!grounded);
+		
+		RaycastHit? hit = null;
+		{
+			RaycastHit shit;
+			if (Physics.Raycast(
+				transform.position + cc.center,
+				Vector3.down, out shit,
+				cc.height + cc.skinWidth,
+				-1,
+				QueryTriggerInteraction.Ignore
+			)) {
+				hit = shit;
+			}
+			// Option<T> has spoiled me, in terms of interface design.
+			// Now I'm chasing its elegant code even when it's missing.
+		}
+		
+		Vector3 normal = hit?.normal ?? Vector3.up;
+		Debug.DrawRay(transform.position, normal, Color.red, 1f);
 		
 		Vector2 wasd = new Vector2(
 			Input.GetAxisRaw("Horizontal"),
@@ -70,7 +105,7 @@ public class PlayerControl : MonoBehaviour {
 				
 				// and recoil a bit from the landing
 				// (squish amount can be negative. it's fun)
-				stretchAmount = -0.5f;
+				stretchAmount = -1/2f;
 			}
 			
 			if (Input.GetButton("Jump")) tryJump = true;
@@ -80,7 +115,7 @@ public class PlayerControl : MonoBehaviour {
 				
 				// lose an implicit jump
 				// (this is how  double jump works in most games)
-				// remainingJumps--;
+				remainingJumps--;
 			}
 			
 			if (Input.GetButtonDown("Jump")) tryJump = true;
@@ -109,14 +144,14 @@ public class PlayerControl : MonoBehaviour {
 				// You tried to jump, but it's just
 				// "your body stretched in midair" right now...
 				// Try again when you land!
-				stretchAmount = 0.25f;
+				stretchAmount = 1/4f;
 			}
 		}
 		
 		leanEulerRotation = Vector3.ClampMagnitude(
 			Vector3.SmoothDamp(
 				leanEulerRotation,
-				new Vector3(-wasd.y, 0f, wasd.x) * leanMagnitude,
+				new Vector3(wasd.y, 0f, -wasd.x) * leanMagnitude,
 				ref leanEulerRotationVelocity,
 				moving ? leanSpeed : leanRecoverSpeed
 			),
@@ -126,12 +161,10 @@ public class PlayerControl : MonoBehaviour {
 		juiceScalePivot.localScale = Vector3.LerpUnclamped(Vector3.one, stretchVector, stretchAmount);
 		juiceRotationPivot.localEulerAngles = leanEulerRotation;
 		
-		Vector3 movement = new Vector3(
-			wasd.x * movementSpeed,
-			upward,
-			wasd.y * movementSpeed
-		);
+		Vector3 movement = new Vector3(wasd.x, 0f, wasd.y) * movementSpeed;
 		movement = transform.localRotation * movement;
+		movement = AdjustVelocityToNormal(movement, normal, 60f);
+		movement.y += upward;
 		
 		prevGrounded = grounded;
 		cc.Move(movement * Time.deltaTime);
@@ -141,6 +174,32 @@ public class PlayerControl : MonoBehaviour {
 		// (CharacterController only does some collision stuff for you, it
 		//  doesn't know what Y velocity variables you use, so you gotta
 		//  give it hints sometimes. It's all good.)
-		grounded |= prevGrounded && Mathf.Approximately(upward, 0f);
+		grounded |= prevGrounded && hit.HasValue && Mathf.Approximately(cc.velocity.y, movement.y);
+		
+		// BUG: again this freaking doesn't actually let you fall off platforms.
+		// might need a raycast using the cc's skin width?? no, because that'll
+		// stumble when it's teetering on the edge.
+	}
+	
+	void OnControllerColliderHit(ControllerColliderHit hit) {
+		if (!hit.gameObject.isStatic) {
+			transform.SetParent(hit.transform);
+			// transform.parent = hit.transform;
+			
+			// UNITY WHY DOESN'T THIS WORK?????
+			// It straight up updates its local position in the inspector
+			// so i'm mystified how this doesn't work.
+			
+			// http://answers.unity.com/answers/1903352/view.html
+			// this "ghost" concept seems like a good solution tho
+		}
+	}
+	
+	// broken tutorial
+	// https://youtu.be/PEHtceu7FBw
+	static Vector3 AdjustVelocityToNormal(Vector3 velocity, Vector3 normal, float slopeLimit = 90f) {
+		Quaternion rotation = Quaternion.FromToRotation(Vector3.up, normal);
+		if (Quaternion.Angle(Quaternion.identity, rotation) > slopeLimit) return velocity;
+		return rotation * velocity;
 	}
 }
