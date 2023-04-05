@@ -79,7 +79,7 @@ CharacterController:
   serializedVersion: 2
   m_Height: 1.875
   m_Radius: 0.5
-  m_SlopeLimit: 60
+  m_SlopeLimit: 50
   m_StepOffset: 0.25
   m_SkinWidth: 0.0625
   m_MinMoveDistance: 0.00024414062
@@ -98,6 +98,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   movementSpeed: 12
   jumpHeight: 10
+  gravity: -16
+  terminalFallVelocity: -12
   maximumJumps: 2
   juiceScalePivot: {fileID: 233069934232802128}
   juiceRotationPivot: {fileID: 7390820348945357474}

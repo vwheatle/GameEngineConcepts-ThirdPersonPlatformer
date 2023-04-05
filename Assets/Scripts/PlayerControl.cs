@@ -76,11 +76,12 @@ public class PlayerControl : MonoBehaviour {
 		RaycastHit? hit = null;
 		{
 			RaycastHit shit;
-			if (Physics.Raycast(
+			if (Physics.SphereCast(
 				transform.position + cc.center,
+				cc.radius,
 				Vector3.down, out shit,
-				cc.height / 2f + cc.skinWidth * 2f,
-				// height must be half
+				(cc.height / 2f + cc.skinWidth * 2f) - cc.radius,
+				// height must be half, and we gotta subtract radius,
 				// but doubling skinWidth was arbitrary on my part
 				-1,
 				QueryTriggerInteraction.Ignore
