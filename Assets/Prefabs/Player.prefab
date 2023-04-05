@@ -50,7 +50,7 @@ CharacterController:
   m_SlopeLimit: 60
   m_StepOffset: 0.25
   m_SkinWidth: 0.0625
-  m_MinMoveDistance: 0.00390625
+  m_MinMoveDistance: 0.00048828125
   m_Center: {x: 0, y: 0.9375, z: 0}
 --- !u!114 &4099691319454647124
 MonoBehaviour:
@@ -64,11 +64,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0296d349e837e924faedf15033a6052e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movementSpeed: 8
-  jumpHeight: 10
+  movementSpeed: 12
+  jumpHeight: 8
   maximumJumps: 2
   juiceVisuals: {fileID: 2800405854583817713}
-  leanMagnitude: 30
+  leanMagnitude: 20
   leanSpeed: 0.125
   leanRecoverSpeed: 0.25
   squishRecoverSpeed: 0.25
