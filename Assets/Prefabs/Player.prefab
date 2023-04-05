@@ -82,7 +82,7 @@ CharacterController:
   m_SlopeLimit: 60
   m_StepOffset: 0.25
   m_SkinWidth: 0.0625
-  m_MinMoveDistance: 0
+  m_MinMoveDistance: 0.00024414062
   m_Center: {x: 0, y: 0.9375, z: 0}
 --- !u!114 &4099691319454647124
 MonoBehaviour:
@@ -101,7 +101,7 @@ MonoBehaviour:
   maximumJumps: 2
   juiceScalePivot: {fileID: 233069934232802128}
   juiceRotationPivot: {fileID: 7390820348945357474}
-  leanMagnitude: 20
+  leanMagnitude: -10
   leanSpeed: 0.125
   leanRecoverSpeed: 0.25
   stretchRecoverSpeed: 0.25

@@ -48,9 +48,17 @@ public class PlayerControl : MonoBehaviour {
 	// Internal flags and state and stuff
 	
 	private bool prevGrounded, grounded;
+	private float stolenSlopeLimit;
 	
 	void Start() {
 		cc = GetComponent<CharacterController>();
+		
+		// Sorry cc, I handle slopes now.
+		// (This lets me stick the player to downward slopes.)
+		stolenSlopeLimit = cc.slopeLimit;
+		cc.slopeLimit = 0f;
+		// adapted this tutorial
+		// https://youtu.be/PEHtceu7FBw
 		
 		leanEulerRotation = Vector3.zero;
 		remainingJumps = maximumJumps;
@@ -66,7 +74,9 @@ public class PlayerControl : MonoBehaviour {
 			if (Physics.Raycast(
 				transform.position + cc.center,
 				Vector3.down, out shit,
-				cc.height + cc.skinWidth,
+				cc.height / 2f + cc.skinWidth * 2f,
+				// height must be half
+				// but doubling skinWidth was arbitrary on my part
 				-1,
 				QueryTriggerInteraction.Ignore
 			)) {
@@ -77,7 +87,10 @@ public class PlayerControl : MonoBehaviour {
 		}
 		
 		Vector3 normal = hit?.normal ?? Vector3.up;
+		
+		// some debug visuals
 		Debug.DrawRay(transform.position, normal, Color.red, 1f);
+		Debug.DrawRay(transform.position + cc.center, Vector3.down * (cc.height / 2f + cc.skinWidth * 2f), Color.blue, 1f);
 		
 		Vector2 wasd = new Vector2(
 			Input.GetAxisRaw("Horizontal"),
@@ -163,7 +176,7 @@ public class PlayerControl : MonoBehaviour {
 		
 		Vector3 movement = new Vector3(wasd.x, 0f, wasd.y) * movementSpeed;
 		movement = transform.localRotation * movement;
-		movement = AdjustVelocityToNormal(movement, normal, 60f);
+		movement = AdjustVelocityToNormal(movement, normal, stolenSlopeLimit);
 		movement.y += upward;
 		
 		prevGrounded = grounded;
@@ -174,16 +187,11 @@ public class PlayerControl : MonoBehaviour {
 		// (CharacterController only does some collision stuff for you, it
 		//  doesn't know what Y velocity variables you use, so you gotta
 		//  give it hints sometimes. It's all good.)
-		grounded |= prevGrounded && hit.HasValue && Mathf.Approximately(cc.velocity.y, movement.y);
-		
-		// BUG: again this freaking doesn't actually let you fall off platforms.
-		// might need a raycast using the cc's skin width?? no, because that'll
-		// stumble when it's teetering on the edge.
+		grounded |= (prevGrounded || Mathf.Approximately(cc.velocity.y, movement.y)) && hit.HasValue;
 	}
 	
 	void OnControllerColliderHit(ControllerColliderHit hit) {
 		if (!hit.gameObject.isStatic) {
-			transform.SetParent(hit.transform);
 			// transform.parent = hit.transform;
 			
 			// UNITY WHY DOESN'T THIS WORK?????
@@ -195,8 +203,6 @@ public class PlayerControl : MonoBehaviour {
 		}
 	}
 	
-	// broken tutorial
-	// https://youtu.be/PEHtceu7FBw
 	static Vector3 AdjustVelocityToNormal(Vector3 velocity, Vector3 normal, float slopeLimit = 90f) {
 		Quaternion rotation = Quaternion.FromToRotation(Vector3.up, normal);
 		if (Quaternion.Angle(Quaternion.identity, rotation) > slopeLimit) return velocity;
