@@ -10,6 +10,8 @@ public class PlayerControl : MonoBehaviour {
 	public float movementSpeed = 8f;
 	[Tooltip("The ")]
 	public float jumpHeight = 10f;
+	public float gravity = -12f;
+	public float terminalFallVelocity = -12f;
 	[Tooltip("The maximum allowed jumps, possibly in mid-air, before the player must land safely to jump again.")]
 	public int maximumJumps = 2;
 	private int remainingJumps = 0;
@@ -23,6 +25,9 @@ public class PlayerControl : MonoBehaviour {
 	
 	[Tooltip("The transform to rotate during leaning animations. Should be a child of the scale pivot.")]
 	public Transform juiceRotationPivot;
+	
+	[Tooltip("The effect prefab to spawn when you jump.")]
+	public GameObject juiceJumpEffect;
 	
 	// Lean into/out of movement.
 	private Vector3 leanEulerRotation;
@@ -105,14 +110,15 @@ public class PlayerControl : MonoBehaviour {
 			stretchRecoverSpeed
 		);
 		
-		bool tryJump = false;
+		bool tryJump = Input.GetButtonDown("Jump");
 		
 		if (grounded) {
+			// Hack to allow easy bunny-hopping.
+			if (Input.GetButton("Jump") && upward < 0f) tryJump = true;
+			
 			upward = 0f;
 			
 			if (justLanded) {
-				Debug.Log("recover!");
-				
 				// recover jumps we lost in air
 				remainingJumps = maximumJumps;
 				
@@ -120,27 +126,28 @@ public class PlayerControl : MonoBehaviour {
 				// (squish amount can be negative. it's fun)
 				stretchAmount = -1/2f;
 			}
-			
-			if (Input.GetButton("Jump")) tryJump = true;
 		} else {
 			if (justLeftGround) {
-				Debug.Log("peace!");
-				
 				// lose an implicit jump
 				// (this is how  double jump works in most games)
 				remainingJumps--;
 			}
 			
-			if (Input.GetButtonDown("Jump")) tryJump = true;
-			
 			if (!tryJump) {
 				// Otherwise, be affected by gravity.
-				upward = Mathf.Max(-8f, upward - Mathf.Abs(Time.deltaTime * 12f));
+				upward = Mathf.Max(terminalFallVelocity, upward + Mathf.Max(0f, Time.deltaTime) * gravity);
 			}
 		}
 	
 		if (tryJump) {
 			if (remainingJumps > 0) {
+				// Spawn the "Jump Effect" (ring that shrinks and disappears)
+				Instantiate(
+					juiceJumpEffect,
+					transform.position,
+					Quaternion.FromToRotation(Vector3.up, normal)
+				);
+				
 				// Lose a jump
 				remainingJumps--;
 				
@@ -151,8 +158,9 @@ public class PlayerControl : MonoBehaviour {
 				// Initial jump velocity
 				upward = jumpHeight;
 				
-				// You're no longer on the ground
-				grounded = false;
+				// You're no longer on the ground,
+				// so take away ground information.
+				grounded = false; hit = null;
 			} else {
 				// You tried to jump, but it's just
 				// "your body stretched in midair" right now...
@@ -181,13 +189,13 @@ public class PlayerControl : MonoBehaviour {
 		
 		prevGrounded = grounded;
 		cc.Move(movement * Time.deltaTime);
-		grounded = cc.isGrounded;
+		grounded = cc.isGrounded && upward <= Mathf.Epsilon;
 		
 		// Hack to fix grounded flag jitter.
 		// (CharacterController only does some collision stuff for you, it
 		//  doesn't know what Y velocity variables you use, so you gotta
 		//  give it hints sometimes. It's all good.)
-		grounded |= (prevGrounded || Mathf.Approximately(cc.velocity.y, movement.y)) && hit.HasValue;
+		grounded |= prevGrounded && hit.HasValue;
 	}
 	
 	void OnControllerColliderHit(ControllerColliderHit hit) {
