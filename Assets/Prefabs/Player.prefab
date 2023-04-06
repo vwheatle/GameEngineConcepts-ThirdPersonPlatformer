@@ -196,9 +196,9 @@ MonoBehaviour:
   jumpHeight: 10
   terminalFallVelocity: -12
   maximumJumps: 2
-  juiceScalePivot: {fileID: 233069934232802128}
-  juiceRotationPivot: {fileID: 7390820348945357474}
-  juiceJumpEffect: {fileID: 6381339089499601536, guid: 76924d1008509a540a07885e634efe8f, type: 3}
+  scalePivot: {fileID: 233069934232802128}
+  rotationPivot: {fileID: 7390820348945357474}
+  jumpEffect: {fileID: 6381339089499601536, guid: 76924d1008509a540a07885e634efe8f, type: 3}
   leanMagnitude: -10
   leanSpeed: 0.125
   leanRecoverSpeed: 0.25

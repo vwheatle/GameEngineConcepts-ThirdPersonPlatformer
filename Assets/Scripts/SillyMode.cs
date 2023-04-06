@@ -17,6 +17,10 @@ public class SillyMode : MonoBehaviour
 
     // Update is called once per frame
     void Update() {
-        transform.localPosition = home + Vector3.up * Mathf.Sin(oscillationSpeed * 2f * Mathf.PI * Time.time) * oscillationMagnitude;
+        transform.localPosition = home
+			+ Vector3.up * Mathf.Sin(oscillationSpeed * 2f * Mathf.PI * Time.time) * oscillationMagnitude
+			+ Vector3.right * Mathf.Cos(oscillationSpeed * 2f * Mathf.PI * Time.time) * oscillationMagnitude
+			+ Vector3.forward * Mathf.Sin(oscillationSpeed * 2f * Mathf.PI * Time.time) * oscillationMagnitude
+		;
     }
 }

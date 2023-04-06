@@ -20,13 +20,13 @@ public class PlayerControl : MonoBehaviour {
 	[Header("Juice")]
 	
 	[Tooltip("The transform to scale during stretch/squish animations. Should be a child of this.")]
-	public Transform juiceScalePivot;
+	public Transform scalePivot;
 	
 	[Tooltip("The transform to rotate during leaning animations. Should be a child of the scale pivot.")]
-	public Transform juiceRotationPivot;
+	public Transform rotationPivot;
 	
 	[Tooltip("The effect prefab to spawn when you jump.")]
-	public GameObject juiceJumpEffect;
+	public GameObject jumpEffect;
 	
 	// Lean into/out of movement.
 	private Vector3 leanEulerRotation;
@@ -64,6 +64,8 @@ public class PlayerControl : MonoBehaviour {
 		// adapted this tutorial
 		// https://youtu.be/PEHtceu7FBw
 		
+		cc.detectCollisions = false;
+		
 		leanEulerRotation = Vector3.zero;
 		remainingJumps = maximumJumps;
 	}
@@ -72,8 +74,9 @@ public class PlayerControl : MonoBehaviour {
 		bool justLanded     = (!prevGrounded) && ( grounded);
 		bool justLeftGround = ( prevGrounded) && (!grounded);
 		
-		RaycastHit? hit = null;
-		{
+		RaycastHit? hit = null; {
+			// Option<T> has spoiled me, in terms of interface design.
+			// Now I'm chasing its elegant code even when it's missing.
 			RaycastHit shit;
 			if (Physics.SphereCast(
 				transform.position + cc.center,
@@ -84,14 +87,16 @@ public class PlayerControl : MonoBehaviour {
 				// but doubling skinWidth was arbitrary on my part
 				-1,
 				QueryTriggerInteraction.Ignore
-			)) {
-				hit = shit;
-			}
-			// Option<T> has spoiled me, in terms of interface design.
-			// Now I'm chasing its elegant code even when it's missing.
+			)) hit = shit;
+			// (^This code packs the boolean of "if the cast hit or not" with
+			//  the cast's hit data both into one nullable variable, which
+			//  allows me to use C#'s fancy ?? null-coalescing operator and
+			//  ?. null-conditional operator.)
 		}
 		
 		Vector3 normal = hit?.normal ?? Vector3.up;
+		Quaternion normalRotation = Quaternion.FromToRotation(Vector3.up, normal);
+		float normalAngle = Quaternion.Angle(Quaternion.identity, normalRotation);
 		
 		// some debug visuals
 		Debug.DrawRay(transform.position, normal, Color.red, 1f);
@@ -116,16 +121,16 @@ public class PlayerControl : MonoBehaviour {
 			// Hack to allow easy bunny-hopping.
 			if (Input.GetButton("Jump") && upward < 0f) tryJump = true;
 			
-			upward = 0f;
-			
 			if (justLanded) {
 				// recover jumps we lost in air
 				remainingJumps = maximumJumps;
 				
 				// and recoil a bit from the landing
 				// (squish amount can be negative. it's fun)
-				stretchAmount = -1/2f;
+				if (upward < 1f) stretchAmount = -1/2f;
 			}
+			
+			upward = 0f;
 		} else {
 			if (justLeftGround) {
 				// lose an implicit jump
@@ -145,11 +150,7 @@ public class PlayerControl : MonoBehaviour {
 		if (tryJump) {
 			if (remainingJumps > 0) {
 				// Spawn the "Jump Effect" (ring that shrinks and disappears)
-				Instantiate(
-					juiceJumpEffect,
-					transform.position,
-					Quaternion.FromToRotation(Vector3.up, normal)
-				);
+				Instantiate(jumpEffect, transform.position, normalRotation);
 				
 				// Lose a jump
 				remainingJumps--;
@@ -172,6 +173,7 @@ public class PlayerControl : MonoBehaviour {
 			}
 		}
 		
+		
 		leanEulerRotation = Vector3.ClampMagnitude(
 			Vector3.SmoothDamp(
 				leanEulerRotation,
@@ -182,8 +184,9 @@ public class PlayerControl : MonoBehaviour {
 			leanMagnitude
 		);
 		
-		juiceScalePivot.localScale = Vector3.LerpUnclamped(Vector3.one, stretchVector, stretchAmount);
-		juiceRotationPivot.localEulerAngles = leanEulerRotation;
+		scalePivot.localScale = Vector3.LerpUnclamped(Vector3.one, stretchVector, stretchAmount);
+		rotationPivot.localEulerAngles = leanEulerRotation;
+		
 		
 		Vector3 movement = new Vector3(wasd.x, 0f, wasd.y) * movementSpeed;
 		movement = transform.localRotation * movement;
