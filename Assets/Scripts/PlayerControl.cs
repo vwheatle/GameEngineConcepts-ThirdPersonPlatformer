@@ -10,7 +10,6 @@ public class PlayerControl : MonoBehaviour {
 	public float movementSpeed = 8f;
 	[Tooltip("The ")]
 	public float jumpHeight = 10f;
-	public float gravity = -12f;
 	public float terminalFallVelocity = -12f;
 	[Tooltip("The maximum allowed jumps, possibly in mid-air, before the player must land safely to jump again.")]
 	public int maximumJumps = 2;
@@ -136,7 +135,10 @@ public class PlayerControl : MonoBehaviour {
 			
 			if (!tryJump) {
 				// Otherwise, be affected by gravity.
-				upward = Mathf.Max(terminalFallVelocity, upward + Mathf.Max(0f, Time.deltaTime) * gravity);
+				upward = Mathf.Max(
+					terminalFallVelocity,
+					upward + Mathf.Max(0f, Time.deltaTime) * Physics.gravity.y
+				);
 			}
 		}
 	
