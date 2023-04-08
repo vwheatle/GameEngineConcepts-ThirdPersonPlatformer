@@ -7,27 +7,28 @@ public class PlayerControl : MonoBehaviour {
 	
 	[Header("Movement")]
 	
+	[Tooltip("The movement speed, in units per second probably.")]
 	public float movementSpeed = 8f;
-	[Tooltip("The ")]
+	
+	[Tooltip("The jump height, in units per second -- but no promises made that the player jumps to this height, as gravity is a force that exists. Treat it as a vague \"jump power\" slider maybe?")]
 	public float jumpHeight = 10f;
+	
+	[Tooltip("The maximum velocity allowed for falling, in units per second.")]
 	public float terminalFallVelocity = -12f;
+	
 	[Tooltip("The maximum allowed jumps, possibly in mid-air, before the player must land safely to jump again.")]
 	public int maximumJumps = 2;
+	
 	private int remainingJumps = 0;
-	
-	private Transform lastFloor;
-	
-	private PlayerSoul soul;
-	// more like "sole" cuz the player's pivot position is their feet lmao!!!
 	
 	private float upward = -4f;
 	
 	[Header("Juice")]
 	
-	[Tooltip("The transform to scale during stretch/squish animations. Should be a child of this.")]
+	[Tooltip("The transform to scale during stretch/squish animations. Should be a descendant of this game object.")]
 	public Transform scalePivot;
 	
-	[Tooltip("The transform to rotate during leaning animations. Should be a child of the scale pivot.")]
+	[Tooltip("The transform to rotate during leaning animations. Should be a descendant of the scale pivot.")]
 	public Transform rotationPivot;
 	
 	[Tooltip("The effect prefab to spawn when you jump.")]
@@ -57,13 +58,18 @@ public class PlayerControl : MonoBehaviour {
 	// Internal flags and state and stuff
 	
 	private bool prevGrounded, grounded;
+	private Transform lastFloor;
+	
 	private float stolenSlopeLimit;
+	
+	private PlayerSoul soul;
+	// more like "sole" cuz the player's pivot position is their feet lmao!!!
 	
 	void Start() {
 		cc = GetComponent<CharacterController>();
 		
 		// Sorry cc, I handle slopes now.
-		// (This lets me stick the player to downward slopes.)
+		// (This helps the player stick to downward slopes.)
 		stolenSlopeLimit = cc.slopeLimit;
 		cc.slopeLimit = 0f;
 		// adapted this tutorial
@@ -83,12 +89,32 @@ public class PlayerControl : MonoBehaviour {
 		bool justLanded     = (!prevGrounded) && ( grounded);
 		bool justLeftGround = ( prevGrounded) && (!grounded);
 		
+		// Height is halved as we're starting the cast in the capsule's center.
+		// Radius is subtracted because of a fun interaction:
+		// To start, the capsule's `.height` is not its total height,
+		// but rather the height of the cylinder portion of the capsule.
+		// That may leave you asking "well then why do you subtract it?
+		//  if it's lacking from the length of the cast." Well, it's because
+		// I'm already doing a sphere cast, and the "maximum cast length" that
+		// I'm specifying will limit how far the *center* of the sphere goes
+		// when casting, not how far the sphere will touch. The sphere has a
+		// radius, and it kinda "overshoots" the maximum length to this radius.
+		// (Unity defines a capsule as a cylinder (of height h and radius r)
+		//  with two halves of a sphere (with radius r) glued to the flat ends.)
+		// All that detail and then I double skinWidth, which was an arbitrary
+		// decision on my part, just to give some wiggle room for the cast.
 		float castLength = (cc.height / 2f + cc.skinWidth * 2f) - cc.radius;
 		if (upward <= Mathf.Epsilon) {
-			// Lengthen raycast length while still or falling
-			// to make sticking to moving ground easier
-			castLength += 1f;
+			// Lengthen the cast's length while still or falling
+			// to make sticking to moving ground easier.
+			castLength += 1/4f;
+			// This does have a downside of sticking
+			// to the ground too soon in a few cases.
 		}
+		
+		// // Visualization of the *actual* extent of the sphere cast,
+		// // with the radius of the sphere included in the length:
+		// Debug.DrawRay(transform.position + cc.center, Vector3.down * (castLength + cc.radius));
 		
 		RaycastHit? hit = null; {
 			// Option<T> has spoiled me, in terms of interface design.
@@ -99,14 +125,11 @@ public class PlayerControl : MonoBehaviour {
 				cc.radius,
 				Vector3.down, out shit,
 				castLength,
-				// height must be half, and we gotta subtract radius,
-				// but doubling skinWidth was arbitrary on my part
 				-1,
 				QueryTriggerInteraction.Ignore
 			)) {
 				hit = shit;
 				if (lastFloor != shit.transform) {
-					Debug.Log("different");
 					lastFloor = shit.transform;
 					soul.AttachTo(lastFloor);
 				}

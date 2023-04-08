@@ -331,7 +331,7 @@ GameObject:
   - component: {fileID: 642338300}
   - component: {fileID: 642338304}
   m_Layer: 0
-  m_Name: Moving Cube
+  m_Name: Nightmare Moving Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1402,7 +1402,7 @@ GameObject:
   - component: {fileID: 2028211250}
   - component: {fileID: 2028211254}
   m_Layer: 0
-  m_Name: Moving Cube (10)
+  m_Name: Easy-Mode Moving Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

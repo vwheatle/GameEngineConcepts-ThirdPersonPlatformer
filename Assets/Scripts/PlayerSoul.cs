@@ -21,6 +21,9 @@ public class PlayerSoul : MonoBehaviour {
 	// Note that this delta position is already scaled to
 	// the previous frame's Time.deltaTime.
 	// I'm not sure how I feel about this.
+	//
+	// Also note that this will "take" the vector, meaning that calling
+	// it a second time before a new frame will give you Vector3.zero.
 	public Vector3 GetDeltaPosition() {
 		if (parent == null) return Vector3.zero;
 		
