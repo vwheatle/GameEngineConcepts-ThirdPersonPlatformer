@@ -18,7 +18,8 @@ public class LinearMovingPlatform : MonoBehaviour {
 	void Update() {
 		transform.localPosition = home + Vector3.Lerp(
 			-oscillationMagnitude, oscillationMagnitude,
-			Mathf.PingPong(Time.time, 1f)
+			Mathf.PingPong(Time.time * (2f / oscillationDuration), 1f)
 		);
+		// transform.eulerAngles += Vector3.up * Time.deltaTime * 15f;
 	}
 }

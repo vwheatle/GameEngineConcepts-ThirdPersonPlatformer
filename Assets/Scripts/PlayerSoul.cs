@@ -6,6 +6,8 @@ public class PlayerSoul : MonoBehaviour {
 	// http://answers.unity.com/answers/1903352/view.html
 	// this "ghost" concept works!!
 	
+	// TODO: fix so that rotation actually works..
+	
 	Transform parent { get => transform.parent; set {
 		if (transform.parent != value) {
 			transform.parent = value;

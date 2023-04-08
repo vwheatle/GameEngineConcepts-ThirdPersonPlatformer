@@ -36,7 +36,7 @@ public class BlobShadow : MonoBehaviour {
 		RaycastHit? sphereHit = null; {
 			RaycastHit shit;
 			if (Physics.SphereCast(
-				parent.position + cc.center, cc.radius, Vector3.down,
+				parent.position + cc.center, cc.radius / 2f, Vector3.down,
 				out shit, Mathf.Infinity,
 				-1, QueryTriggerInteraction.Ignore
 			)) sphereHit = shit;

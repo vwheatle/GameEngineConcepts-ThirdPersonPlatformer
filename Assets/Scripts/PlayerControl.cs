@@ -170,7 +170,7 @@ public class PlayerControl : MonoBehaviour {
 		
 		if (grounded) {
 			// Hack to allow easy bunny-hopping.
-			if (Input.GetButton("Jump") && upward < 0f) tryJump = true;
+			if (Input.GetButton("Jump") && upward < Mathf.Epsilon) tryJump = true;
 			
 			if (justLanded) {
 				// recover jumps we lost in air
@@ -250,6 +250,9 @@ public class PlayerControl : MonoBehaviour {
 		movement = AdjustVelocityToNormal(movement, normal, stolenSlopeLimit);
 		movement.y += upward;
 		
+		// TODO: maybe if the `soul.GetDeltaPosition()` is not equal to the last
+		// `soul.GetDeltaPosition()`, then it'll snap the player's position
+		// to the position of the cast's hit?
 		prevGrounded = grounded;
 		cc.Move((movement * Time.deltaTime) + soul.GetDeltaPosition());
 		grounded = cc.isGrounded && upward <= Mathf.Epsilon;
