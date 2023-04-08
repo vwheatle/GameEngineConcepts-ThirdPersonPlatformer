@@ -15,6 +15,11 @@ public class PlayerControl : MonoBehaviour {
 	public int maximumJumps = 2;
 	private int remainingJumps = 0;
 	
+	private Transform lastFloor;
+	
+	private PlayerSoul soul;
+	// more like "sole" cuz the player's pivot position is their feet lmao!!!
+	
 	private float upward = -4f;
 	
 	[Header("Juice")]
@@ -68,11 +73,22 @@ public class PlayerControl : MonoBehaviour {
 		
 		leanEulerRotation = Vector3.zero;
 		remainingJumps = maximumJumps;
+		
+		// Create "soul" that possesses moving objects
+		GameObject soulGo = new GameObject("Soul");
+		soul = soulGo.AddComponent<PlayerSoul>();
 	}
 
 	void Update() {
 		bool justLanded     = (!prevGrounded) && ( grounded);
 		bool justLeftGround = ( prevGrounded) && (!grounded);
+		
+		float castLength = (cc.height / 2f + cc.skinWidth * 2f) - cc.radius;
+		if (upward <= Mathf.Epsilon) {
+			// Lengthen raycast length while still or falling
+			// to make sticking to moving ground easier
+			castLength += 1f;
+		}
 		
 		RaycastHit? hit = null; {
 			// Option<T> has spoiled me, in terms of interface design.
@@ -82,12 +98,19 @@ public class PlayerControl : MonoBehaviour {
 				transform.position + cc.center,
 				cc.radius,
 				Vector3.down, out shit,
-				(cc.height / 2f + cc.skinWidth * 2f) - cc.radius,
+				castLength,
 				// height must be half, and we gotta subtract radius,
 				// but doubling skinWidth was arbitrary on my part
 				-1,
 				QueryTriggerInteraction.Ignore
-			)) hit = shit;
+			)) {
+				hit = shit;
+				if (lastFloor != shit.transform) {
+					Debug.Log("different");
+					lastFloor = shit.transform;
+					soul.AttachTo(lastFloor);
+				}
+			}
 			// (^This code packs the boolean of "if the cast hit or not" with
 			//  the cast's hit data both into one nullable variable, which
 			//  allows me to use C#'s fancy ?? null-coalescing operator and
@@ -98,9 +121,14 @@ public class PlayerControl : MonoBehaviour {
 		Quaternion normalRotation = Quaternion.FromToRotation(Vector3.up, normal);
 		float normalAngle = Quaternion.Angle(Quaternion.identity, normalRotation);
 		
-		// some debug visuals
-		Debug.DrawRay(transform.position, normal, Color.red, 1f);
-		Debug.DrawRay(transform.position + cc.center, Vector3.down * (cc.height / 2f + cc.skinWidth * 2f), Color.blue, 1f);
+		// if (Mathf.Abs(normalAngle) > stolenSlopeLimit) {
+		// 	// You can't stand here. Sorry.
+		// 	// TODO: slipping??
+		// 	grounded = false;
+		// 	justLanded     = (!prevGrounded) && ( grounded);
+		// 	justLeftGround = ( prevGrounded) && (!grounded);
+		// 	hit = null;
+		// }
 		
 		Vector2 wasd = new Vector2(
 			Input.GetAxisRaw("Horizontal"),
@@ -136,6 +164,9 @@ public class PlayerControl : MonoBehaviour {
 				// lose an implicit jump
 				// (this is how  double jump works in most games)
 				remainingJumps--;
+				
+				// Detach the soul from the platform we left.
+				soul.Detach();
 			}
 			
 			if (!tryJump) {
@@ -165,6 +196,9 @@ public class PlayerControl : MonoBehaviour {
 				// You're no longer on the ground,
 				// so take away ground information.
 				grounded = false; hit = null;
+				
+				// and retreive your soul.
+				soul.Detach();
 			} else {
 				// You tried to jump, but it's just
 				// "your body stretched in midair" right now...
@@ -194,7 +228,7 @@ public class PlayerControl : MonoBehaviour {
 		movement.y += upward;
 		
 		prevGrounded = grounded;
-		cc.Move(movement * Time.deltaTime);
+		cc.Move((movement * Time.deltaTime) + soul.GetDeltaPosition());
 		grounded = cc.isGrounded && upward <= Mathf.Epsilon;
 		
 		// Hack to fix grounded flag jitter.
@@ -205,16 +239,18 @@ public class PlayerControl : MonoBehaviour {
 	}
 	
 	void OnControllerColliderHit(ControllerColliderHit hit) {
-		if (!hit.gameObject.isStatic) {
-			// transform.parent = hit.transform;
-			
-			// UNITY WHY DOESN'T THIS WORK?????
-			// It straight up updates its local position in the inspector
-			// so i'm mystified how this doesn't work.
-			
-			// http://answers.unity.com/answers/1903352/view.html
-			// this "ghost" concept seems like a good solution tho
-		}
+		Bounds b = hit.collider.bounds;
+		b.extents *= 9/8f;
+		
+		Debug.DrawLine(b.min, b.min + Vector3.right   * b.size.x, Color.red  , 0.1f);
+		Debug.DrawLine(b.min, b.min + Vector3.up      * b.size.y, Color.green, 0.1f);
+		Debug.DrawLine(b.min, b.min + Vector3.forward * b.size.z, Color.blue , 0.1f);
+		
+		Debug.DrawLine(b.max, b.max - Vector3.right   * b.size.x, Color.red  , 0.1f);
+		Debug.DrawLine(b.max, b.max - Vector3.up      * b.size.y, Color.green, 0.1f);
+		Debug.DrawLine(b.max, b.max - Vector3.forward * b.size.z, Color.blue , 0.1f);
+		
+		soul.AttachTo(hit.transform);
 	}
 	
 	static Vector3 AdjustVelocityToNormal(Vector3 velocity, Vector3 normal, float slopeLimit = 90f) {
