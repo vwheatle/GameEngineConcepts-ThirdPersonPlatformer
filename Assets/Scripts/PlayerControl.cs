@@ -75,8 +75,6 @@ public class PlayerControl : MonoBehaviour {
 		// adapted this tutorial
 		// https://youtu.be/PEHtceu7FBw
 		
-		cc.detectCollisions = false;
-		
 		leanEulerRotation = Vector3.zero;
 		remainingJumps = maximumJumps;
 		
