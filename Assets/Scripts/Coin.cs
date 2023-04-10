@@ -40,8 +40,9 @@ public class Coin : MonoBehaviour {
 	}
 	
 	void OnTriggerEnter(Collider other) {
+		if (collectTime.HasValue) return;
 		if (other.CompareTag("Player")) {
-			// TODO send message to game state singleton
+			SendMessageUpwards("Collect", this.gameObject, SendMessageOptions.RequireReceiver);
 			collectTime = Time.time;
 		}
 	}

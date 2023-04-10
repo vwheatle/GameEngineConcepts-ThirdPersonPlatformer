@@ -5,6 +5,8 @@ using UnityEngine;
 public class PlayerControl : MonoBehaviour {
 	private CharacterController cc;
 	
+	private AudioSource jumpSound;
+	
 	[Header("Movement")]
 	
 	[Tooltip("The movement speed, in units per second probably.")]
@@ -67,6 +69,8 @@ public class PlayerControl : MonoBehaviour {
 	
 	void Start() {
 		cc = GetComponent<CharacterController>();
+		
+		jumpSound = GetComponent<AudioSource>();
 		
 		// Sorry cc, I handle slopes now.
 		// (This helps the player stick to downward slopes.)
@@ -203,6 +207,9 @@ public class PlayerControl : MonoBehaviour {
 			if (remainingJumps > 0) {
 				// Spawn the "Jump Effect" (ring that shrinks and disappears)
 				Instantiate(jumpEffect, transform.position, normalRotation);
+				
+				jumpSound.pitch = Mathf.Lerp(1.3f, 1f, remainingJumps / (float)maximumJumps);
+				jumpSound.Play();
 				
 				// Lose a jump
 				remainingJumps--;

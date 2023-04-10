@@ -8,12 +8,15 @@ public class PlayerSoul : MonoBehaviour {
 	
 	// TODO: fix so that rotation actually works..
 	
-	Transform parent { get => transform.parent; set {
-		if (transform.parent != value) {
-			transform.parent = value;
-			transform.position = Vector3.zero;
+	Transform parent {
+		get => transform.parent;
+		set {
+			if (transform.parent != value) {
+				transform.parent = value;
+				transform.position = Vector3.zero;
+			}
 		}
-	} }
+	}
 	
 	void Awake() {
 		parent = null;

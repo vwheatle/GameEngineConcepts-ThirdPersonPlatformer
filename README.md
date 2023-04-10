@@ -8,6 +8,9 @@ for my Game Engine Concepts class..
 - I think I was mentally referencing the Yo! Noid 2 capsule Noid character when I was implementing the procedural animations? Definitely had it in mind.
 - I'm stealing a good amount of code from my last game, [Speedrun FPS](https://github.com/vwheatle/IntroToGameDev-SpeedrunFPS/).
 
+- Some sounds generated with https://raylibtech.itch.io/rfxgen
+- Coin Finalize sound from https://freesound.org/people/PhilSavlem/sounds/338260/
+
 ## Current Issues
 
 - jumping up the REALLY BIG slope below the example level exhausts all your jumps while you're still grounded on the slope
