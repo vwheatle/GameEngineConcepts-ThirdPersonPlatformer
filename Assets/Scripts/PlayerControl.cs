@@ -257,7 +257,8 @@ public class PlayerControl : MonoBehaviour {
 		
 		Vector3 movement = new Vector3(wasd.x, 0f, wasd.y) * movementSpeed;
 		movement = transform.localRotation * movement;
-		movement = AdjustVelocityToNormal(movement, normal, stolenSlopeLimit);
+		if (grounded)
+			movement = AdjustVelocityToNormal(movement, normal, stolenSlopeLimit);
 		movement.y += upward;
 		
 		// TODO: maybe if the `soul.GetDeltaPosition()` is not equal to the last

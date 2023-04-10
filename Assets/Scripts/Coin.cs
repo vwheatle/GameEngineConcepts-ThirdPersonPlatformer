@@ -8,21 +8,24 @@ public class Coin : MonoBehaviour {
 	
 	const float SHRINK_DURATION = 0.25f;
 	
-	private Transform graphic;
+	private Vector3 initialScale;
 	
 	private float? collectTime = null;
 	
 	void Awake() {
+		initialScale = transform.localScale;
 		ResetLevel();
 	}
 	
 	void ResetLevel() {
 		collectTime = null;
+		transform.localScale = initialScale;
 		gameObject.SetActive(true);
 	}
 	
 	void Update() {
-		transform.localEulerAngles = Vector3.up * ROTATE_SPEED * Time.time;
+		// yes, global rotation set. when it spins around it spins pointing up.
+		transform.eulerAngles = Vector3.up * ROTATE_SPEED * Time.time;
 		
 		if (collectTime.HasValue) {
 			float startTime = collectTime.Value;
@@ -30,10 +33,10 @@ public class Coin : MonoBehaviour {
 			float diffTime = Time.time - startTime;
 			float percentDead = diffTime / SHRINK_DURATION;
 			
-			float scalarScale = Mathf.Max(0f, 1f - percentDead);
+			// pop out a little while animating out. feels nice
+			float scalarScale = Mathf.Max(0f, 1f - percentDead) * 1.25f;
 			
-			// Hard-code coin size, don't care any more...
-			transform.localScale = (Vector3.one / 2f) * scalarScale;
+			transform.localScale = initialScale * scalarScale;
 			
 			if (percentDead >= 1f) gameObject.SetActive(false);
 		}
