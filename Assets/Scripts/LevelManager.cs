@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class LevelManager : MonoBehaviour {
 	private static LevelManager me;
@@ -18,11 +19,13 @@ public class LevelManager : MonoBehaviour {
 		player = GameObject.FindGameObjectWithTag("Player");
 	}
 	
-	void Start() {
-		
+	void Die() {
+		currentState = State.Dead;
+		StartCoroutine(DeathWait());
 	}
 	
-	void Update() {
-		
+	IEnumerator DeathWait() {
+		yield return new WaitForSeconds(1.5f);
+		SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
 	}
 }

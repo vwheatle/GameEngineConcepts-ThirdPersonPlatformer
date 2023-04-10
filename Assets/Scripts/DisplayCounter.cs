@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
+// Fancy counter for any integer value you want!
+// Just set the value in another script
+// and this'll add it to an accumulator
+// and eventually (in a second or so) commit it to a larger label!
+// And it looks nice doing it! It has nice jolts for some extra juice.
+
 public class DisplayCounter : MonoBehaviour {
 	public TMP_Text displayLabel;
 	private (string, string) displaySurroundings;
@@ -40,8 +46,11 @@ public class DisplayCounter : MonoBehaviour {
 		set {
 			if (value != displayedValue) {
 				nextValue = value;
-				accumulatorJolt = 1;
+				
+				accumulatorJolt = 1f;
+				accumulatorJoltVelocity = 0.5f;
 				accumulatorLastChangeTime = Time.time;
+				
 				UpdateAccumulatorLabel();
 				updateSound.pitch = Mathf.Max(0.9f, 1f + ((nextValue - displayedValue) % 10) / 16f);
 				updateSound.Play();
@@ -79,8 +88,11 @@ public class DisplayCounter : MonoBehaviour {
 			
 			if (finalization >= 1f) {
 				accumulatorLastChangeTime = null;
+				
 				displayJolt = 1;
+				displayJoltVelocity = 0.5f;
 				displayedValue = nextValue;
+				
 				UpdateDisplayLabel();
 				finalizeSound.Play();
 			}

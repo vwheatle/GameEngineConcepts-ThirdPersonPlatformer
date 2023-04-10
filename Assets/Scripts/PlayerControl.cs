@@ -160,6 +160,10 @@ public class PlayerControl : MonoBehaviour {
 			Input.GetAxisRaw("Vertical")
 		).normalized;
 		
+		if (LevelManager.the.state != LevelManager.State.Playing) {
+			wasd = Vector2.zero;
+		}
+		
 		bool moving = !Mathf.Approximately(wasd.sqrMagnitude, 0f);
 		
 		stretchAmount = Mathf.SmoothDamp(
@@ -248,7 +252,7 @@ public class PlayerControl : MonoBehaviour {
 				ref leanEulerRotationVelocity,
 				moving ? leanSpeed : leanRecoverSpeed
 			),
-			leanMagnitude
+			Mathf.Abs(leanMagnitude)
 		);
 		
 		scalePivot.localScale = Vector3.LerpUnclamped(Vector3.one, stretchVector, stretchAmount);
@@ -276,17 +280,6 @@ public class PlayerControl : MonoBehaviour {
 	}
 	
 	void OnControllerColliderHit(ControllerColliderHit hit) {
-		Bounds b = hit.collider.bounds;
-		b.extents *= 9/8f;
-		
-		Debug.DrawLine(b.min, b.min + Vector3.right   * b.size.x, Color.red  , 0.1f);
-		Debug.DrawLine(b.min, b.min + Vector3.up      * b.size.y, Color.green, 0.1f);
-		Debug.DrawLine(b.min, b.min + Vector3.forward * b.size.z, Color.blue , 0.1f);
-		
-		Debug.DrawLine(b.max, b.max - Vector3.right   * b.size.x, Color.red  , 0.1f);
-		Debug.DrawLine(b.max, b.max - Vector3.up      * b.size.y, Color.green, 0.1f);
-		Debug.DrawLine(b.max, b.max - Vector3.forward * b.size.z, Color.blue , 0.1f);
-		
 		soul.AttachTo(hit.transform);
 	}
 	

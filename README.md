@@ -10,6 +10,7 @@ for my Game Engine Concepts class..
 
 - Some sounds generated with https://raylibtech.itch.io/rfxgen
 - Coin Finalize sound from https://freesound.org/people/PhilSavlem/sounds/338260/
+- Dying sound from https://freesound.org/people/craigsmith/sounds/675810/
 
 ## Current Issues
 
