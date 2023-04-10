@@ -209,6 +209,7 @@ public class PlayerControl : MonoBehaviour {
 				Instantiate(jumpEffect, transform.position, normalRotation);
 				
 				jumpSound.pitch = Mathf.Lerp(1.3f, 1f, remainingJumps / (float)maximumJumps);
+				jumpSound.volume = 1f;
 				jumpSound.Play();
 				
 				// Lose a jump
@@ -232,6 +233,10 @@ public class PlayerControl : MonoBehaviour {
 				// "your body stretched in midair" right now...
 				// Try again when you land!
 				stretchAmount = 1/4f;
+				
+				jumpSound.pitch = 1.75f;
+				jumpSound.volume = 0.25f;
+				jumpSound.Play();
 			}
 		}
 		
