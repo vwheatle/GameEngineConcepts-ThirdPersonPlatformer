@@ -43,7 +43,7 @@ public class DisplayCounter : MonoBehaviour {
 				accumulatorJolt = 1;
 				accumulatorLastChangeTime = Time.time;
 				UpdateAccumulatorLabel();
-				updateSound.pitch = Mathf.Min(1f + nextValue / 16f, 1.3f);
+				updateSound.pitch = Mathf.Max(0.9f, 1f + ((nextValue - displayedValue) % 10) / 16f);
 				updateSound.Play();
 			}
 		}
