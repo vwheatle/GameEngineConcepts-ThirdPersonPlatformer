@@ -1,4 +1,4 @@
-# Third Person Platformer
+# [Third Person Platformer](https://github.com/vwheatle/GameEngineConcepts-ThirdPersonPlatformer)
 
 for my Game Engine Concepts class..
 
