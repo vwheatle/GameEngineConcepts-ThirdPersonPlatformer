@@ -160,10 +160,6 @@ public class PlayerControl : MonoBehaviour {
 			Input.GetAxisRaw("Vertical")
 		).normalized;
 		
-		if (LevelManager.the.state != LevelManager.State.Playing) {
-			wasd = Vector2.zero;
-		}
-		
 		bool moving = !Mathf.Approximately(wasd.sqrMagnitude, 0f);
 		
 		stretchAmount = Mathf.SmoothDamp(
@@ -205,6 +201,12 @@ public class PlayerControl : MonoBehaviour {
 					upward + Mathf.Max(0f, Time.deltaTime) * Physics.gravity.y
 				);
 			}
+		}
+		
+		if (LevelManager.the.state != LevelManager.State.Playing) {
+			wasd = Vector2.zero;
+			moving = false;
+			tryJump = false;
 		}
 	
 		if (tryJump) {

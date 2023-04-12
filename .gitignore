@@ -83,3 +83,7 @@ crashlytics-build.properties
 # hide   the generated scene stuff..
 /[Aa]ssets/Scenes/*/
 /[Aa]ssets/Scenes/*.meta
+
+# hide my assignment submission artifacts
+/*.pdf
+/*.zip
