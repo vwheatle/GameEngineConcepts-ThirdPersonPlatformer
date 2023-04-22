@@ -87,3 +87,7 @@ crashlytics-build.properties
 # hide my assignment submission artifacts
 /*.pdf
 /*.zip
+/BuildWhatever
+
+# ignore debug log
+debug.log
